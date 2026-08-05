@@ -1,0 +1,16 @@
+{
+	"name": "dantrains-abridged",
+	"version": "1.2.0",
+	"private": true,
+	"description": "Build tooling for the Dan Trains Abridged subway-builder mod. The mod itself ships as index.js + manifest.json.",
+	"scripts": {
+		"build": "tsc -p tsconfig.json && node dist-scripts/build.js",
+		"package": "npm run build && node dist-scripts/zip.js"
+	},
+	"devDependencies": {
+		"@types/js-yaml": "^4.0.9",
+		"@types/node": "^26.1.2",
+		"js-yaml": "^5.2.3",
+		"typescript": "^7.0.2"
+	}
+}
