@@ -39,6 +39,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            danTrains-Abridged.zip
+            BasedGoatTrains-Abridged.zip
             manifest.json
           generate_release_notes: true
