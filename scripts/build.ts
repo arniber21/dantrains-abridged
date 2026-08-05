@@ -3,7 +3,7 @@ import * as path from "path";
 import * as yaml from "js-yaml";
 
 const REPO_ROOT = path.resolve(__dirname, "..");
-const TRAINS_YAML_PATH = path.join(REPO_ROOT, "src", "trains.yaml");
+const TRAINS_YAML_PATH = path.join(REPO_ROOT, "trains.yaml");
 const OUTPUT_PATH = path.join(REPO_ROOT, "index.js");
 
 interface TrainStats {

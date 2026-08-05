@@ -1,0 +1,44 @@
+name: Release
+
+# Registry publishing requires a GitHub release carrying two assets: the mod
+# ZIP and a standalone manifest.json (see registry docs > Publishing Content).
+# Tag with `npm version <major|minor|patch>` (syncs manifest.json automatically)
+# then `git push --follow-tags` to trigger this.
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: npm ci
+
+      - name: Verify tag matches manifest.json version
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          MANIFEST_VERSION=$(node -p "require('./manifest.json').version")
+          if [ "$TAG_VERSION" != "$MANIFEST_VERSION" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match manifest.json version $MANIFEST_VERSION"
+            exit 1
+          fi
+
+      - run: npm run package
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            danTrains-Abridged.zip
+            manifest.json
+          generate_release_notes: true
