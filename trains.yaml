@@ -13,6 +13,8 @@
 # and light-metro do below) to leave the base game's own train type untouched.
 # `elevationTransitionCosts: true` applies the shared portal/ramp surcharge.
 # `stats.crossoverSpeed` defaults to constants.standardCrossoverSpeed if omitted.
+# `modifiedTrainTypes` may be omitted entirely for a mod that only adds new
+# train types and doesn't touch any base-game ones.
 
 constants:
   standardCrossoverSpeed: 6.7
