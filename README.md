@@ -1,4 +1,4 @@
-# Dan Trains Abridged
+# BasedGoat Trains
 
 A [Subway Builder Modded](https://subwaybuildermodded.com/) mod adding a roster of real-world-inspired rolling stock, and overriding several base-game train types with more detailed stats.
 
@@ -10,7 +10,7 @@ The mod ships as `index.js` + `manifest.json`, loaded by the game via `window.Su
 
 - **`trains.yaml`** is the source of truth for every train's stats, elevation multipliers, appearance, and grade-crossing behavior, plus the shared constants they draw from.
 - **`scripts/build.ts`** compiles `trains.yaml` into `index.js`.
-- **`scripts/zip.ts`** packages `index.js` + `manifest.json` into `danTrains-Abridged.zip` for distribution.
+- **`scripts/zip.ts`** packages `index.js` + `manifest.json` into `BasedGoatTrains-Abridged.zip` for distribution.
 
 ## Adding or editing a train
 
@@ -30,14 +30,14 @@ The mod ships as `index.js` + `manifest.json`, loaded by the game via `window.Su
 | Command | Effect |
 | --- | --- |
 | `npm run build` | Compile `trains.yaml` → `index.js` |
-| `npm run package` | Build, then zip `index.js` + `manifest.json` → `danTrains-Abridged.zip` |
+| `npm run package` | Build, then zip `index.js` + `manifest.json` → `BasedGoatTrains-Abridged.zip` |
 | `npm version <patch\|minor\|major>` | Bump `package.json`'s version and sync it into `manifest.json` in the same commit/tag |
 
 ## Releasing
 
 1. `npm version patch` (or `minor`/`major`) — bumps and commits the version, syncs `manifest.json`, and tags the commit.
 2. `git push --follow-tags` — pushes the commit and tag.
-3. The `release.yml` GitHub Actions workflow picks up the tag, rebuilds and packages the mod, verifies the tag matches `manifest.json`'s version, and publishes a GitHub Release with `danTrains-Abridged.zip` and `manifest.json` attached as separate assets — the format the [Registry](https://subwaybuildermodded.com/registry/docs/publishing-content) expects.
+3. The `release.yml` GitHub Actions workflow picks up the tag, rebuilds and packages the mod, verifies the tag matches `manifest.json`'s version, and publishes a GitHub Release with `BasedGoatTrains-Abridged.zip` and `manifest.json` attached as separate assets — the format the [Registry](https://subwaybuildermodded.com/registry/docs/publishing-content) expects.
 
 `ci.yml` runs on every push/PR to catch a stale `index.js` before it merges.
 

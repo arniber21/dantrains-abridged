@@ -4,7 +4,7 @@ import * as path from "path";
 import * as os from "os";
 
 const REPO_ROOT = path.resolve(__dirname, "..");
-const ZIP_PATH = path.join(REPO_ROOT, "danTrains-Abridged.zip");
+const ZIP_PATH = path.join(REPO_ROOT, "BasedGoatTrains-Abridged.zip");
 const FILES_TO_PACKAGE = ["index.js", "manifest.json"];
 
 function pack(): void {
