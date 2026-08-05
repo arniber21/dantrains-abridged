@@ -54,7 +54,7 @@ newTrainTypes:
     minCars: 4
     maxCars: 8
     carsPerCarSet: 2
-    capacityPerCar: 222
+    capacityPerCar: 200
     carLength: 22.86
     trainWidth: 3.09
     carCost: 2750000
