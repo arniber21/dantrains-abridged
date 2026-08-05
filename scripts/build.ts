@@ -196,7 +196,7 @@ function build(): void {
 	out.push('"use strict";');
 	out.push("");
 	out.push("(function () {");
-	out.push(`${TAB}const TAG = "[DanTrains Abridged]";`);
+	out.push(`${TAB}const TAG = "[(DanTrains Abridged Modified) Trains]";`);
 	out.push("");
 	out.push(`${TAB}const api = window.SubwayBuilderAPI;`);
 	out.push(`${TAB}if (!api) {`);

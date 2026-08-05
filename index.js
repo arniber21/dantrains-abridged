@@ -2,7 +2,7 @@
 "use strict";
 
 (function () {
-	const TAG = "[DanTrains Abridged]";
+	const TAG = "[(DanTrains Abridged Modified) Trains]";
 
 	const api = window.SubwayBuilderAPI;
 	if (!api) {
