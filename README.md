@@ -2,7 +2,7 @@
 
 A [Subway Builder Modded](https://subwaybuildermodded.com/) mod adding a roster of real-world-inspired rolling stock, and overriding several base-game train types with more detailed stats.
 
-This is a fork of [DanielD1909/danTrains-Abridged](https://github.com/DanielD1909/danTrains-Abridged), rebuilt around a YAML-driven compiler workflow instead of hand-written JS.
+This is built around a YAML-driven compiler workflow instead of hand-written JS.
 
 ## How it works
 
