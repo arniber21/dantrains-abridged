@@ -8,7 +8,7 @@ const ZIP_PATH = path.join(REPO_ROOT, "BasedGoatTrains-Abridged.zip");
 const FILES_TO_PACKAGE = ["index.js", "manifest.json"];
 
 function pack(): void {
-	const stagingDir = fs.mkdtempSync(path.join(os.tmpdir(), "dantrains-package-"));
+	const stagingDir = fs.mkdtempSync(path.join(os.tmpdir(), "basedgoat-trains-package-"));
 	try {
 		for (const file of FILES_TO_PACKAGE) {
 			fs.copyFileSync(path.join(REPO_ROOT, file), path.join(stagingDir, file));

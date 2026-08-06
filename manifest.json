@@ -1,17 +1,17 @@
 {
 	"id": "basedgoat-trains",
 	"name": "BasedGoat Trains",
-	"description": "This is a quick and easy version of DanTrains for usage on the latest version of subway builder. This is a fork of DanTrains Abridged (dantrains-abridged).",
+	"description": "A roster of real-world-inspired heavy rail metro trains for the latest version of Subway Builder.",
 	"version": "0.2.0",
 	"author": {
-		"name": "DanielD1909",
-		"url": "https://github.com/DanielD1909"
+		"name": "arniber21",
+		"url": "https://github.com/arniber21"
 	},
 	"main": "index.js",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/DanielD1909/danTrains-Abridged"
+		"url": "https://github.com/arniber21/dantrains-abridged"
 	},
 	"keywords": [
 		"subway-builder",

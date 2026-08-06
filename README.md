@@ -1,6 +1,6 @@
 # BasedGoat Trains
 
-A [Subway Builder Modded](https://subwaybuildermodded.com/) mod adding a roster of real-world-inspired rolling stock, and overriding several base-game train types with more detailed stats.
+A [Subway Builder Modded](https://subwaybuildermodded.com/) mod adding a roster of real-world-inspired heavy rail metro rolling stock.
 
 This is built around a YAML-driven compiler workflow instead of hand-written JS.
 

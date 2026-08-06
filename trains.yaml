@@ -1,4 +1,4 @@
-# Train roster for the Dan Trains Abridged mod.
+# Train roster for the BasedGoat Trains mod.
 #
 # This is the source of truth for all train data. Edit this file, then run
 # `npm run build` to regenerate index.js (the file the game actually loads).
