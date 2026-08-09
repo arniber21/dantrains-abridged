@@ -1,0 +1,94 @@
+# Blank train template for BasedGoat Trains.
+#
+# Copy everything below the divider, fill it in, and send it over. It gets
+# pasted as one entry under `newTrainTypes:` in trains.yaml.
+#
+# Units: metres, seconds, m/s, m/s^2. Speeds are m/s, NOT km/h or mph
+# (multiply mph by 0.447, km/h by 0.278).
+#
+# Please send YAML in this shape rather than the game's JSON export. The export
+# carries fields this mod has no use for (`schemaVersion`, `revision`, `tags`)
+# and is missing two it needs (`elevationMultipliers`, `gradeCrossing`).
+#
+# ---------------------------------------------------------------------------
+
+- id: my-train                 # REQUIRED. Unique, lowercase, no spaces. Also
+                               # names the track type other trains reference.
+  name: My Train               # REQUIRED. Display name shown in-game.
+  description: What it is      # Optional, but nice to have.
+
+  stats:                       # REQUIRED. Every value is a plain number.
+    # --- Performance ---
+    maxSpeed:                  # Top speed, m/s.
+    maxAcceleration:           # m/s^2. Typical metro ~1.0-1.35.
+    maxDeceleration:           # m/s^2. Service braking, not emergency.
+    maxLateralAcceleration:    # m/s^2. Higher = can hold tighter curves fast.
+    maxSlopePercentage:        # Steepest grade climbable, percent.
+    maxSpeedLocalStation:      # m/s through a station it isn't stopping at.
+
+    # --- Geometry ---
+    minTurnRadius:             # Tightest mainline curve, metres.
+    minStationTurnRadius:      # Tightest curve through a station, metres.
+    parallelTrackSpacing:      # Track centre to track centre, metres.
+    trackClearance:            # Clearance either side of centreline, metres.
+    trainWidth:                # Metres.
+    carLength:                 # Metres, per car.
+
+    # --- Consist ---
+    minCars:                   # Shortest allowed train.
+    maxCars:                   # Longest allowed train.
+    carsPerCarSet:             # Cars that couple as an inseparable unit (1 if
+                               # single cars can be added or removed freely).
+    capacityPerCar:            # Passengers per car, crush load.
+
+    # --- Stations ---
+    minStationLength:          # Metres. Usually >= carLength * minCars.
+    maxStationLength:          # Metres. Usually >= carLength * maxCars.
+    stopTimeSeconds:           # Dwell at a station, seconds.
+
+    # --- Costs ---
+    carCost:                   # One-time purchase price per car.
+    baseTrackCost:             # Per metre of track.
+    baseStationCost:           # Per station.
+    scissorsCrossoverCost:     # Per scissors crossover.
+    trainOperationalCostPerHour:   # Per train in service, per hour.
+    carOperationalCostPerHour:     # Per car in service, per hour.
+
+    # --- Optional; omit the line entirely to take the game's default ---
+    # trackMaintenanceCostPerMeter:
+    # stationMaintenanceCostPerYear:
+    # tphLimit:                # Trains per hour ceiling on this stock.
+    # crossoverSpeed:          # m/s over a scissors crossover. Omitted =
+                               # constants.standardCrossoverSpeed (6.7).
+
+  elevationMultipliers:        # REQUIRED. Cost multipliers vs. the baseline
+                               # for building in each elevation profile.
+                               # Reference values from BART FOTF:
+    DEEP_BORE:                 # 4.9
+    STANDARD_TUNNEL:           # 2.09
+    CUT_AND_COVER:             # 1.04
+    AT_GRADE:                  # 0.3
+    ELEVATED:                  # 0.83
+    TRENCHED:                  # 0.52
+    RAMP:                      # 0.52
+
+  compatibleTrackTypes:        # Optional. Track types this train can run on,
+                               # by train `id`. Include its own id unless it is
+                               # meant to run only on someone else's track.
+  - my-train
+
+  appearance:
+    color: '#FFFFFF'           # REQUIRED. Hex, quoted (bare # starts a comment).
+
+  elevationTransitionCosts: true   # Optional. `true` applies the shared
+                                   # portal/ramp surcharge. Whole roster uses
+                                   # it; drop the line only if you mean to.
+
+  gradeCrossing: none          # Optional. One of:
+                               #   none      - no road crossings at all
+                               #   lightRail - streetcars/LRVs; cheap upkeep,
+                               #               high TPH caps (20/20/40)
+                               #   heavyRail - metro/commuter rail; pricier
+                               #               upkeep, low TPH caps (15/18/21)
+                               # Omit entirely ONLY when overriding a base-game
+                               # train you want left untouched.
