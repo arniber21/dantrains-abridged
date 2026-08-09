@@ -44,14 +44,18 @@ persist via `api.storage`.
 
 Three limits worth knowing:
 
-- **The storage API differs by game version.** The docs describe
-  `storage.scoped()`, but shipping builds don't all have it, so `makeStore()`
-  feature-detects: `scoped()` if present, otherwise the plain methods with an
-  explicit `modId`, otherwise session-only memory. Assuming the documented
-  shape is what originally crashed the mod on load.
-- **Storage is desktop-only.** In the browser build every call is a silent
-  no-op, so trains made there vanish on reload. The panel checks the write
-  landed and says so instead of pretending the save worked.
+- **`api.storage` is unusable from the UI on some builds.** Mod context exists
+  only while the mod script runs synchronously, so a click handler is never in
+  it. `scoped()` is the documented fix, but game 1.6.0 has neither `scoped()`
+  nor a working `modId` argument — every call is dropped with a "called outside
+  of mod context" warning. `makeStore()` therefore tries, in order: `scoped()`,
+  then `localStorage` (no context requirement, so it works from anywhere), then
+  the mod API with an explicit `modId`, then session-only memory. Each tier is
+  probed, not assumed.
+- **Storage is desktop-only.** In the browser build every `api.storage` call is
+  a silent no-op, so trains made there vanish on reload. The panel round-trips
+  a probe and counts sessions, and reports what it actually found instead of
+  pretending the save worked.
 - **There is no `unregisterTrainType`.** Deleting drops the train from storage,
   but it stays in the picker until the game reloads.
 

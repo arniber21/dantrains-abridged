@@ -33,6 +33,58 @@
 		keys(): Promise<string[]>;
 		/** False when writes go nowhere: no storage API, or a browser build. */
 		readonly persistent: boolean;
+		/** Which backend won, for the diagnostics banner. */
+		readonly label: string;
+	}
+
+	/**
+	 * The renderer's own storage, namespaced by hand.
+	 *
+	 * Mod context only exists while the mod script runs synchronously, so on
+	 * builds without `scoped()` no call from a click handler can ever be in
+	 * context -- the game drops the write and warns "called outside of mod
+	 * context". localStorage has no such notion, so it works from anywhere.
+	 * Returns null if it isn't usable.
+	 */
+	function makeLocalStorageStore(): Store | null {
+		const prefix = `${MOD_ID}:`;
+		try {
+			if (typeof localStorage === "undefined" || !localStorage) return null;
+			// Round-trip a probe rather than assume: the game may sandbox this.
+			const probe = `${prefix}__probe`;
+			const token = `t${Date.now()}`;
+			localStorage.setItem(probe, token);
+			const ok = localStorage.getItem(probe) === token;
+			localStorage.removeItem(probe);
+			if (!ok) return null;
+		} catch {
+			return null;
+		}
+
+		const ls = localStorage;
+		return {
+			get: async <T,>(key: string, fallback: T): Promise<T> => {
+				try {
+					const raw = ls.getItem(prefix + key);
+					return raw === null ? fallback : (JSON.parse(raw) as T);
+				} catch {
+					return fallback;
+				}
+			},
+			set: async (key: string, value: unknown): Promise<void> => {
+				ls.setItem(prefix + key, JSON.stringify(value));
+			},
+			keys: async (): Promise<string[]> => {
+				const found: string[] = [];
+				for (let i = 0; i < ls.length; i++) {
+					const key = ls.key(i);
+					if (key !== null && key.indexOf(prefix) === 0) found.push(key.slice(prefix.length));
+				}
+				return found;
+			},
+			persistent: true,
+			label: "browser storage",
+		};
 	}
 
 	/**
@@ -54,22 +106,32 @@
 				set: (key, value) => scoped.set(key, value),
 				keys: () => scoped.keys(),
 				persistent: true,
+				label: "mod storage (scoped)",
 			};
 		}
 
+		// No scoped(). Observed on game 1.6.0: the documented `modId` argument is
+		// ignored there too, so every call from the UI is dropped with a "called
+		// outside of mod context" warning. Prefer localStorage, which has no
+		// context requirement, and keep the mod API as a fallback for builds
+		// where the argument is honoured.
+		const local = makeLocalStorageStore();
+		if (local) {
+			console.log(`${TAG} api.storage.scoped() missing; using ${local.label} instead.`);
+			return local;
+		}
+
 		if (raw && typeof raw.get === "function" && typeof raw.set === "function") {
-			// No scoped(); pass the mod id explicitly so post-await calls still
-			// resolve to our namespace. Builds that ignore the argument are
-			// unaffected by it.
 			return {
 				get: (key, fallback) => raw.get(key, fallback, MOD_ID),
 				set: (key, value) => raw.set(key, value, MOD_ID),
 				keys: () => (typeof raw.keys === "function" ? raw.keys(MOD_ID) : Promise.resolve([])),
 				persistent: true,
+				label: "mod storage (explicit modId)",
 			};
 		}
 
-		console.log(`${TAG} no storage API on this build; custom trains will last this session only.`);
+		console.log(`${TAG} no usable storage on this build; custom trains will last this session only.`);
 		const memory: Record<string, unknown> = {};
 		return {
 			get: async <T,>(key: string, fallback: T): Promise<T> =>
@@ -79,6 +141,7 @@
 			},
 			keys: async (): Promise<string[]> => Object.keys(memory),
 			persistent: false,
+			label: "memory (this session only)",
 		};
 	}
 
@@ -654,16 +717,18 @@
 			storageBanner = h(
 				"p",
 				{ key: "s", className: "text-xs text-destructive" },
-				"Storage is not working on this build — trains you add will be gone when you quit. " +
-					"Storage needs the desktop app; the browser version cannot persist anything."
+				"Storage is not working here — trains you add will be gone when you quit. " +
+					"This build rejects mod storage calls made from the UI, and no browser-storage " +
+					"fallback is available. On the web version storage never persists; on desktop, " +
+					"updating the game should fix it."
 			);
 		} else {
 			storageBanner = h(
 				"p",
 				{ key: "s", className: "text-xs text-muted-foreground" },
 				diag.sessions <= 1
-					? "Storage responded, but this is the first session it has recorded. If this line still says session 1 next launch, data is not surviving between sessions."
-					: `Storage OK — session ${diag.sessions}, so data is surviving between launches.`
+					? `Using ${store.label}. This is the first session it has recorded — if this still says session 1 next launch, data is not surviving between sessions.`
+					: `Using ${store.label} — session ${diag.sessions}, so data is surviving between launches.`
 			);
 		}
 

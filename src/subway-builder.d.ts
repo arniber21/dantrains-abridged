@@ -165,3 +165,19 @@ interface SubwayBuilderApi {
 
 declare const window: { SubwayBuilderAPI?: SubwayBuilderApi };
 declare const console: { log(...args: unknown[]): void; error(...args: unknown[]): void };
+
+/**
+ * The renderer's own storage. Unlike api.storage this has no notion of mod
+ * context, so it works from event handlers on builds where the mod storage
+ * API does not. Always guard with `typeof localStorage` -- it is not
+ * guaranteed to exist, and a bare reference to a missing global throws.
+ */
+declare const localStorage:
+	| {
+			getItem(key: string): string | null;
+			setItem(key: string, value: string): void;
+			removeItem(key: string): void;
+			key(index: number): string | null;
+			readonly length: number;
+	  }
+	| undefined;
