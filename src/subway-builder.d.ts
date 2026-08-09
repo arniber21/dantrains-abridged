@@ -116,15 +116,16 @@ interface SbReact {
  * resolves to the default without persisting anything.
  */
 interface SbScopedStorage {
-	readonly modId: string;
-	get<T>(key: string, defaultValue: T): Promise<T>;
-	set(key: string, value: unknown): Promise<void>;
-	delete(key: string): Promise<void>;
-	keys(): Promise<string[]>;
+	readonly modId?: string;
+	get<T>(key: string, defaultValue: T, modId?: string): Promise<T>;
+	set(key: string, value: unknown, modId?: string): Promise<void>;
+	delete(key: string, modId?: string): Promise<void>;
+	keys(modId?: string): Promise<string[]>;
 }
 
 interface SbStorage extends SbScopedStorage {
-	scoped(): SbScopedStorage;
+	/** Absent on older builds -- always feature-detect before calling. */
+	scoped?(): SbScopedStorage;
 }
 
 interface SbToolbarPanel {
@@ -136,15 +137,18 @@ interface SbToolbarPanel {
 	render: () => SbNode;
 }
 
+// Members are optional wherever a real build has been observed to lack them.
+// The docs describe a newer API than some shipping versions expose, so the UI
+// feature-detects rather than trusting this file.
 interface SubwayBuilderApi {
 	trains: {
 		registerTrainType(definition: TrainDefinition): void;
-		getTrainTypes(): TrainDefinition[];
+		getTrainTypes?(): TrainDefinition[];
 	};
-	storage: SbStorage;
+	storage?: SbStorage;
 	ui: {
-		addToolbarPanel(panel: SbToolbarPanel): void;
-		showNotification(
+		addToolbarPanel?(panel: SbToolbarPanel): void;
+		showNotification?(
 			message: string,
 			kind?: "success" | "info" | "error" | "warning"
 		): void;

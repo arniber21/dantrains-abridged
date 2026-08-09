@@ -191,13 +191,33 @@ function serializeGradeCrossingPreset(name: string, preset: GradeCrossingPreset,
  * (index.js already has one at the top, so a second is dead weight).
  * Returns null when the UI hasn't been compiled, which keeps the YAML-only
  * build working on its own.
+ *
+ * The bundle is wrapped in try/catch because the whole mod is evaluated in one
+ * `new Function()` call: an exception anywhere aborts the rest of the file. The
+ * roster registers above this point, but a UI that throws would still surface
+ * as "Failed to execute mod script" and mark the mod broken. The editor is the
+ * optional half, so it fails alone.
  */
 function readCompiledUi(): string | null {
 	if (!fs.existsSync(UI_JS_PATH)) return null;
-	return fs
+
+	const body = fs
 		.readFileSync(UI_JS_PATH, "utf8")
 		.replace(/^"use strict";\r?\n/, "")
-		.trimEnd();
+		.trimEnd()
+		.split("\n")
+		.map((line) => (line.length > 0 ? `${TAB}${line}` : line))
+		.join("\n");
+
+	return [
+		"// The custom-train editor. Isolated so that a UI failure cannot stop the",
+		"// train types above from registering.",
+		"try {",
+		body,
+		"} catch (error) {",
+		`${TAB}console.error("[BasedGoat Trains] custom-train editor failed to load.", error);`,
+		"}",
+	].join("\n");
 }
 
 function build(): void {

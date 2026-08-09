@@ -39,15 +39,25 @@ train types without touching the repo. Source is TypeScript:
 - **`tsconfig.mod.json`** compiles `src/` → `dist-mod/ui.js`, which
   `scripts/build.ts` appends to the generated `index.js`.
 
-New trains start from a full 28-stat default and persist via `api.storage`.
+New trains start from a full 28-stat default, are validated before saving, and
+persist via `api.storage`.
 
-Two limits worth knowing:
+Three limits worth knowing:
 
-- **Storage is desktop-only.** In the browser build every storage call is a
-  silent no-op, so trains made there vanish on reload. The panel detects this
-  and says so instead of pretending the save worked.
+- **The storage API differs by game version.** The docs describe
+  `storage.scoped()`, but shipping builds don't all have it, so `makeStore()`
+  feature-detects: `scoped()` if present, otherwise the plain methods with an
+  explicit `modId`, otherwise session-only memory. Assuming the documented
+  shape is what originally crashed the mod on load.
+- **Storage is desktop-only.** In the browser build every call is a silent
+  no-op, so trains made there vanish on reload. The panel checks the write
+  landed and says so instead of pretending the save worked.
 - **There is no `unregisterTrainType`.** Deleting drops the train from storage,
   but it stays in the picker until the game reloads.
+
+The editor is wrapped in `try`/`catch` by `scripts/build.ts`. The entire mod is
+one `new Function()` evaluation, so an exception anywhere aborts the rest of the
+file — without the wrapper, a UI bug takes the train roster down with it.
 
 Trains added this way live in save data, not in `trains.yaml` — to ship one with
 the mod, copy its numbers into the YAML.
