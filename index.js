@@ -378,10 +378,8 @@ try {
 	        // context requirement, and keep the mod API as a fallback for builds
 	        // where the argument is honoured.
 	        const local = makeLocalStorageStore();
-	        if (local) {
-	            console.log(`${TAG} api.storage.scoped() missing; using ${local.label} instead.`);
+	        if (local)
 	            return local;
-	        }
 	        if (raw && typeof raw.get === "function" && typeof raw.set === "function") {
 	            return {
 	                get: (key, fallback) => raw.get(key, fallback, MOD_ID),
@@ -391,7 +389,7 @@ try {
 	                label: "mod storage (explicit modId)",
 	            };
 	        }
-	        console.log(`${TAG} no usable storage on this build; custom trains will last this session only.`);
+	        console.error(`${TAG} no usable storage on this build; custom trains will last this session only.`);
 	        const memory = {};
 	        return {
 	            get: async (key, fallback) => key in memory ? memory[key] : fallback,
@@ -706,8 +704,11 @@ try {
 	        catch (error) {
 	            console.error(`${TAG} could not update the session counter.`, error);
 	        }
-	        console.log(`${TAG} storage: round-trip ${roundTrip ? "ok" : "FAILED"}, ` +
-	            `session #${sessions}${sessions === 1 ? " (if this stays 1 every launch, nothing is persisting)" : ""}.`);
+	        // Only worth saying out loud when it's broken; the panel banner carries
+	        // the healthy case.
+	        if (!roundTrip) {
+	            console.error(`${TAG} storage did not round-trip; custom trains will not persist.`);
+	        }
 	        return { roundTrip, sessions };
 	    }
 	    api.hooks.onMapReady(() => {
@@ -716,7 +717,6 @@ try {
 	        void loadSaved().then((trains) => {
 	            for (const train of trains)
 	                register(train);
-	            console.log(`${TAG} restored ${trains.length} custom train(s) from storage.`);
 	        }, (error) => {
 	            console.error(`${TAG} could not restore custom trains.`, error);
 	        });
