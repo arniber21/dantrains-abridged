@@ -25,11 +25,38 @@ The mod ships as `index.js` + `manifest.json`, loaded by the game via `window.Su
 
 4. **Commit both `trains.yaml` and the regenerated `index.js` together.** CI fails the build if the committed `index.js` doesn't match what `trains.yaml` compiles to, so they always move as a pair.
 
+## In-game train editor
+
+`index.js` also carries a toolbar panel ("Custom Trains", train icon) for creating
+train types without touching the repo. Source is TypeScript:
+
+- **`src/subway-builder.d.ts`** — hand-written ambient types for the slice of
+  `window.SubwayBuilderAPI` this mod uses. `TrainStats` has no optional members
+  on purpose: the game fills in no defaults, so a missing stat yields NaN costs
+  rather than an error, and this way the compiler catches it first.
+- **`src/ui.ts`** — the panel. A single IIFE with no imports, since mods are
+  evaluated through `new Function()`.
+- **`tsconfig.mod.json`** compiles `src/` → `dist-mod/ui.js`, which
+  `scripts/build.ts` appends to the generated `index.js`.
+
+New trains start from a full 28-stat default and persist via `api.storage`.
+
+Two limits worth knowing:
+
+- **Storage is desktop-only.** In the browser build every storage call is a
+  silent no-op, so trains made there vanish on reload. The panel detects this
+  and says so instead of pretending the save worked.
+- **There is no `unregisterTrainType`.** Deleting drops the train from storage,
+  but it stays in the picker until the game reloads.
+
+Trains added this way live in save data, not in `trains.yaml` — to ship one with
+the mod, copy its numbers into the YAML.
+
 ## Scripts
 
 | Command | Effect |
 | --- | --- |
-| `npm run build` | Compile `trains.yaml` → `index.js` |
+| `npm run build` | Compile `trains.yaml` + `src/ui.ts` → `index.js` |
 | `npm run package` | Build, then zip `index.js` + `manifest.json` → `BasedGoatTrains-Abridged.zip` |
 | `npm version <patch\|minor\|major>` | Bump `package.json`'s version and sync it into `manifest.json` in the same commit/tag |
 

@@ -5,6 +5,8 @@ import * as yaml from "js-yaml";
 const REPO_ROOT = path.resolve(__dirname, "..");
 const TRAINS_YAML_PATH = path.join(REPO_ROOT, "trains.yaml");
 const OUTPUT_PATH = path.join(REPO_ROOT, "index.js");
+// Compiled from src/ui.ts by `tsc -p tsconfig.mod.json`; appended verbatim.
+const UI_JS_PATH = path.join(REPO_ROOT, "dist-mod", "ui.js");
 
 interface TrainStats {
 	[key: string]: number;
@@ -184,6 +186,20 @@ function serializeGradeCrossingPreset(name: string, preset: GradeCrossingPreset,
 	].join("\n");
 }
 
+/**
+ * Reads the compiled UI bundle, dropping the "use strict" prologue tsc emits
+ * (index.js already has one at the top, so a second is dead weight).
+ * Returns null when the UI hasn't been compiled, which keeps the YAML-only
+ * build working on its own.
+ */
+function readCompiledUi(): string | null {
+	if (!fs.existsSync(UI_JS_PATH)) return null;
+	return fs
+		.readFileSync(UI_JS_PATH, "utf8")
+		.replace(/^"use strict";\r?\n/, "")
+		.trimEnd();
+}
+
 function build(): void {
 	const rawYaml = fs.readFileSync(TRAINS_YAML_PATH, "utf8");
 	const data = yaml.load(rawYaml) as TrainsYaml;
@@ -257,10 +273,17 @@ function build(): void {
 	out.push("})();");
 	out.push("");
 
+	const ui = readCompiledUi();
+	if (ui) {
+		out.push(ui);
+		out.push("");
+	}
+
 	fs.writeFileSync(OUTPUT_PATH, out.join("\n"));
 	console.log(
 		`Wrote ${path.relative(REPO_ROOT, OUTPUT_PATH)} from ${path.relative(REPO_ROOT, TRAINS_YAML_PATH)} ` +
-			`(${modifiedTrainTypes.length} modified, ${data.newTrainTypes.length} new train types).`
+			`(${modifiedTrainTypes.length} modified, ${data.newTrainTypes.length} new train types` +
+			`${ui ? ", plus the custom-train editor UI" : ""}).`
 	);
 }
 

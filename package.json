@@ -4,7 +4,7 @@
 	"private": true,
 	"description": "Build tooling for the BasedGoat Trains subway-builder mod. The mod itself ships as index.js + manifest.json.",
 	"scripts": {
-		"build": "tsc -p tsconfig.json && node dist-scripts/build.js",
+		"build": "tsc -p tsconfig.json && tsc -p tsconfig.mod.json && node dist-scripts/build.js",
 		"package": "npm run build && node dist-scripts/zip.js",
 		"version": "node scripts/sync-manifest-version.js && git add manifest.json"
 	},

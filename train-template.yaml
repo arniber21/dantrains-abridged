@@ -17,7 +17,11 @@
   name: My Train               # REQUIRED. Display name shown in-game.
   description: What it is      # Optional, but nice to have.
 
-  stats:                       # REQUIRED. Every value is a plain number.
+  stats:                       # REQUIRED, and so is every single field under
+                               # it. The game fills in NO defaults for missing
+                               # stats -- a hole here produces NaN costs or
+                               # broken physics rather than an error message.
+                               # Leave nothing blank except crossoverSpeed.
     # --- Performance ---
     maxSpeed:                  # Top speed, m/s.
     maxAcceleration:           # m/s^2. Typical metro ~1.0-1.35.
@@ -48,18 +52,19 @@
 
     # --- Costs ---
     carCost:                   # One-time purchase price per car.
-    baseTrackCost:             # Per metre of track.
-    baseStationCost:           # Per station.
-    scissorsCrossoverCost:     # Per scissors crossover.
+    baseTrackCost:             # Per metre of cut-and-cover double track.
+    baseStationCost:           # Per cut-and-cover double-track station.
     trainOperationalCostPerHour:   # Per train in service, per hour.
     carOperationalCostPerHour:     # Per car in service, per hour.
+    trackMaintenanceCostPerMeter:  # Per metre, per year.
+    stationMaintenanceCostPerYear: # Per station, per year.
 
-    # --- Optional; omit the line entirely to take the game's default ---
-    # trackMaintenanceCostPerMeter:
-    # stationMaintenanceCostPerYear:
-    # tphLimit:                # Trains per hour ceiling on this stock.
-    # crossoverSpeed:          # m/s over a scissors crossover. Omitted =
-                               # constants.standardCrossoverSpeed (6.7).
+    # --- Capacity ---
+    tphLimit:                  # Trains-per-hour ceiling for this stock.
+
+    # The ONLY stat you may leave out. Omitted = constants.standardCrossoverSpeed
+    # (6.7), which the build fills in for you.
+    # crossoverSpeed:          # m/s over a scissors crossover.
 
   elevationMultipliers:        # REQUIRED. Cost multipliers vs. the baseline
                                # for building in each elevation profile.
