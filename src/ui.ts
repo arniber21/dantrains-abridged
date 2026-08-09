@@ -9,6 +9,8 @@
 (function () {
 	const TAG = "[BasedGoat Trains]";
 	const STORAGE_KEY = "customTrains";
+	const PROBE_KEY = "storageProbe";
+	const SESSIONS_KEY = "sessionCount";
 	const MOD_ID = "basedgoat-trains"; // must match manifest.json
 
 	const maybeApi = window.SubwayBuilderAPI;
@@ -384,18 +386,17 @@
 
 		if (!store.persistent) return false;
 
-		// Browser builds make every storage call a silent no-op, so confirm the
-		// key exists rather than trusting set() to have done something.
+		// Read the value back rather than listing keys: get() is the same call
+		// the next session will make, so a round-trip through it is the only
+		// check that actually proves anything. An earlier version listed keys
+		// and, when that failed, assumed the write had landed -- which reported
+		// success on builds that were quietly dropping the data.
 		try {
-			const keys = await store.keys();
-			return keys.indexOf(STORAGE_KEY) !== -1;
+			const echo = await store.get<TrainDefinition[]>(STORAGE_KEY, []);
+			return Array.isArray(echo) && echo.length === trains.length;
 		} catch (error) {
-			// This read-back runs after an await, i.e. outside mod context, which
-			// older builds reject. The write above resolved, so report success:
-			// a failed verification is not evidence the save was lost, and
-			// crying wolf here would send people re-entering good data.
-			console.error(`${TAG} could not verify the write; assuming it landed.`, error);
-			return true;
+			console.error(`${TAG} could not read the write back.`, error);
+			return false;
 		}
 	}
 
@@ -405,11 +406,56 @@
 
 	// Re-register saved trains on every load. registerTrainType replaces an
 	// existing id wholesale, so this is safe to run repeatedly.
+	// ---------------------------------------------------------------------
+	// Storage diagnostics
+	// ---------------------------------------------------------------------
+
+	interface Diagnostics {
+		/** Did a value written this session read back correctly? */
+		roundTrip: boolean;
+		/**
+		 * How many times this mod has started with storage intact. If it reads
+		 * 1 on every launch, nothing is surviving between sessions -- which is
+		 * the distinction a same-session round-trip cannot make on its own.
+		 */
+		sessions: number;
+	}
+
+	let diagnostics: Promise<Diagnostics> | null = null;
+
+	async function runDiagnostics(): Promise<Diagnostics> {
+		let roundTrip = false;
+		try {
+			const token = `probe-${Date.now()}`;
+			await store.set(PROBE_KEY, token);
+			roundTrip = (await store.get<string>(PROBE_KEY, "")) === token;
+		} catch (error) {
+			console.error(`${TAG} storage probe threw.`, error);
+		}
+
+		let sessions = 0;
+		try {
+			sessions = (await store.get<number>(SESSIONS_KEY, 0)) + 1;
+			await store.set(SESSIONS_KEY, sessions);
+		} catch (error) {
+			console.error(`${TAG} could not update the session counter.`, error);
+		}
+
+		console.log(
+			`${TAG} storage: round-trip ${roundTrip ? "ok" : "FAILED"}, ` +
+				`session #${sessions}${sessions === 1 ? " (if this stays 1 every launch, nothing is persisting)" : ""}.`
+		);
+		return { roundTrip, sessions };
+	}
+
 	api.hooks.onMapReady(() => {
+		diagnostics = runDiagnostics();
+		void diagnostics;
+
 		void loadSaved().then(
 			(trains) => {
 				for (const train of trains) register(train);
-				if (trains.length > 0) console.log(`${TAG} restored ${trains.length} custom train(s).`);
+				console.log(`${TAG} restored ${trains.length} custom train(s) from storage.`);
 			},
 			(error: unknown) => {
 				console.error(`${TAG} could not restore custom trains.`, error);
@@ -469,13 +515,15 @@
 	function TrainEditorPanel(): SbNode {
 		const [saved, setSaved] = useState<TrainDefinition[]>([]);
 		const [draft, setDraft] = useState<Draft>(newDraft);
+		const [diag, setDiag] = useState<Diagnostics | null>(null);
 		// Blank id/name are errors, but nagging about them before the first save
 		// attempt is obnoxious. Stat errors always show -- those fields start
 		// prefilled, so anything wrong with them is something you typed.
 		const [attempted, setAttempted] = useState<boolean>(false);
 
 		useEffect(() => {
-			void loadSaved().then(setSaved);
+			void loadSaved().then(setSaved, () => setSaved([]));
+			if (diagnostics) void diagnostics.then(setDiag);
 		}, []);
 
 		const v = validate(draft, takenIds());
@@ -591,7 +639,36 @@
 			notices.push(h("p", { key: warning, className: "text-xs text-yellow-600" }, `Warning: ${warning}`));
 		}
 
+		let storageBanner: SbNode = null;
+		if (diag === null) {
+			storageBanner = h("p", { key: "s", className: "text-xs text-muted-foreground" }, "Checking storage…");
+		} else if (!store.persistent) {
+			// The in-memory fallback round-trips perfectly, so the probe alone
+			// would call this healthy. It is not.
+			storageBanner = h(
+				"p",
+				{ key: "s", className: "text-xs text-destructive" },
+				"This build exposes no storage API, so trains are kept in memory and last this session only."
+			);
+		} else if (!diag.roundTrip) {
+			storageBanner = h(
+				"p",
+				{ key: "s", className: "text-xs text-destructive" },
+				"Storage is not working on this build — trains you add will be gone when you quit. " +
+					"Storage needs the desktop app; the browser version cannot persist anything."
+			);
+		} else {
+			storageBanner = h(
+				"p",
+				{ key: "s", className: "text-xs text-muted-foreground" },
+				diag.sessions <= 1
+					? "Storage responded, but this is the first session it has recorded. If this line still says session 1 next launch, data is not surviving between sessions."
+					: `Storage OK — session ${diag.sessions}, so data is surviving between launches.`
+			);
+		}
+
 		return h("div", { className: "space-y-4 p-4" }, [
+			storageBanner,
 			h("section", { key: "saved", className: "space-y-2" }, [
 				h("h3", { key: "t", className: "text-sm font-semibold" }, "Custom trains"),
 				...savedList,
