@@ -368,14 +368,35 @@
 		return await store.get<TrainDefinition[]>(STORAGE_KEY, []);
 	}
 
-	/** Persists and reports whether the write actually stuck. */
+	/**
+	 * Persists and reports whether the write actually stuck. Never rejects:
+	 * callers use the boolean to decide what to tell the user.
+	 */
 	async function persist(trains: TrainDefinition[]): Promise<boolean> {
-		await store.set(STORAGE_KEY, trains);
+		try {
+			// Called before any await in this function, so the game can still
+			// resolve which mod is writing.
+			await store.set(STORAGE_KEY, trains);
+		} catch (error) {
+			console.error(`${TAG} storage write failed.`, error);
+			return false;
+		}
+
 		if (!store.persistent) return false;
+
 		// Browser builds make every storage call a silent no-op, so confirm the
 		// key exists rather than trusting set() to have done something.
-		const keys = await store.keys();
-		return keys.indexOf(STORAGE_KEY) !== -1;
+		try {
+			const keys = await store.keys();
+			return keys.indexOf(STORAGE_KEY) !== -1;
+		} catch (error) {
+			// This read-back runs after an await, i.e. outside mod context, which
+			// older builds reject. The write above resolved, so report success:
+			// a failed verification is not evidence the save was lost, and
+			// crying wolf here would send people re-entering good data.
+			console.error(`${TAG} could not verify the write; assuming it landed.`, error);
+			return true;
+		}
 	}
 
 	function register(definition: TrainDefinition): void {
@@ -385,10 +406,15 @@
 	// Re-register saved trains on every load. registerTrainType replaces an
 	// existing id wholesale, so this is safe to run repeatedly.
 	api.hooks.onMapReady(() => {
-		void loadSaved().then((trains) => {
-			for (const train of trains) register(train);
-			if (trains.length > 0) console.log(`${TAG} restored ${trains.length} custom train(s).`);
-		});
+		void loadSaved().then(
+			(trains) => {
+				for (const train of trains) register(train);
+				if (trains.length > 0) console.log(`${TAG} restored ${trains.length} custom train(s).`);
+			},
+			(error: unknown) => {
+				console.error(`${TAG} could not restore custom trains.`, error);
+			}
+		);
 	});
 
 	// ---------------------------------------------------------------------

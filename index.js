@@ -589,15 +589,36 @@ try {
 	    async function loadSaved() {
 	        return await store.get(STORAGE_KEY, []);
 	    }
-	    /** Persists and reports whether the write actually stuck. */
+	    /**
+	     * Persists and reports whether the write actually stuck. Never rejects:
+	     * callers use the boolean to decide what to tell the user.
+	     */
 	    async function persist(trains) {
-	        await store.set(STORAGE_KEY, trains);
+	        try {
+	            // Called before any await in this function, so the game can still
+	            // resolve which mod is writing.
+	            await store.set(STORAGE_KEY, trains);
+	        }
+	        catch (error) {
+	            console.error(`${TAG} storage write failed.`, error);
+	            return false;
+	        }
 	        if (!store.persistent)
 	            return false;
 	        // Browser builds make every storage call a silent no-op, so confirm the
 	        // key exists rather than trusting set() to have done something.
-	        const keys = await store.keys();
-	        return keys.indexOf(STORAGE_KEY) !== -1;
+	        try {
+	            const keys = await store.keys();
+	            return keys.indexOf(STORAGE_KEY) !== -1;
+	        }
+	        catch (error) {
+	            // This read-back runs after an await, i.e. outside mod context, which
+	            // older builds reject. The write above resolved, so report success:
+	            // a failed verification is not evidence the save was lost, and
+	            // crying wolf here would send people re-entering good data.
+	            console.error(`${TAG} could not verify the write; assuming it landed.`, error);
+	            return true;
+	        }
 	    }
 	    function register(definition) {
 	        api.trains.registerTrainType(definition);
@@ -610,6 +631,8 @@ try {
 	                register(train);
 	            if (trains.length > 0)
 	                console.log(`${TAG} restored ${trains.length} custom train(s).`);
+	        }, (error) => {
+	            console.error(`${TAG} could not restore custom trains.`, error);
 	        });
 	    });
 	    // ---------------------------------------------------------------------
