@@ -24,7 +24,7 @@ constants:
   gradeCrossingPresets:
     heavyRail:
       gradeCrossingBaseCost: 300000
-      gradeCrossingMaintenancePerYear: 8000
+      gradeCrossingMaintenancePerDay: 8000
       gradeCrossingTphLimit:
         highway: null
         major: 15
@@ -32,7 +32,7 @@ constants:
         minor: 21
     lightRail:
       gradeCrossingBaseCost: 300000
-      gradeCrossingMaintenancePerYear: 800
+      gradeCrossingMaintenancePerDay: 800
       gradeCrossingTphLimit:
         highway: null
         major: 20
@@ -64,7 +64,6 @@ newTrainTypes:
     maxStationLength: 200
     baseTrackCost: 35000
     baseStationCost: 65000000
-    scissorsCrossoverCost: 18750000
     trainOperationalCostPerHour: 215
     carOperationalCostPerHour: 22
     trackMaintenanceCostPerMeter: 360
@@ -110,7 +109,6 @@ newTrainTypes:
     maxStationLength: 240
     baseTrackCost: 55000
     baseStationCost: 75000000
-    scissorsCrossoverCost: 15000000
     trainOperationalCostPerHour: 195
     carOperationalCostPerHour: 19.5
     trackMaintenanceCostPerMeter: 300
@@ -156,10 +154,12 @@ newTrainTypes:
     maxStationLength: 51
     baseTrackCost: 35000
     baseStationCost: 63750000
-    scissorsCrossoverCost: 12750000
     trainOperationalCostPerHour: 100
     carOperationalCostPerHour: 5
+    trackMaintenanceCostPerMeter: 250
+    stationMaintenanceCostPerYear: 320
     stopTimeSeconds: 25
+    tphLimit: 42
   elevationMultipliers:
     DEEP_BORE: 4.9
     STANDARD_TUNNEL: 2.09
@@ -200,10 +200,12 @@ newTrainTypes:
     maxStationLength: 221
     baseTrackCost: 25000
     baseStationCost: 63750000
-    scissorsCrossoverCost: 12750000
     trainOperationalCostPerHour: 500
     carOperationalCostPerHour: 35
+    trackMaintenanceCostPerMeter: 300
+    stationMaintenanceCostPerYear: 320
     stopTimeSeconds: 40
+    tphLimit: 24
   elevationMultipliers:
     DEEP_BORE: 4.9
     STANDARD_TUNNEL: 2.09
@@ -264,3 +266,48 @@ newTrainTypes:
     color: '#b05f21'
   elevationTransitionCosts: true
   gradeCrossing: lightRail
+- id: cta9000-series
+  name: CTA 9000 Series
+  description: Hypothetical set for the next generation of CTA 'L' rolling stock
+  stats:
+    maxSpeed: 31.3
+    maxAcceleration: 1.34
+    maxDeceleration: 1.25
+    maxLateralAcceleration: 1.63
+    maxSlopePercentage: 5.5
+    maxSpeedLocalStation: 15.7
+    minTurnRadius: 27.4
+    minStationTurnRadius: 900
+    parallelTrackSpacing: 11.35
+    trackClearance: 1.71
+    trainWidth: 2.84
+    carLength: 14.63
+    minCars: 2
+    maxCars: 10
+    carsPerCarSet: 2
+    capacityPerCar: 160
+    minStationLength: 30
+    maxStationLength: 147
+    stopTimeSeconds: 30
+    carCost: 1232022
+    baseTrackCost: 50000
+    baseStationCost: 63750000
+    trainOperationalCostPerHour: 220
+    carOperationalCostPerHour: 28
+    trackMaintenanceCostPerMeter: 200
+    stationMaintenanceCostPerYear: 10000
+    tphLimit: 42
+  elevationMultipliers:
+    DEEP_BORE: 4.5
+    STANDARD_TUNNEL: 2
+    CUT_AND_COVER: 1
+    AT_GRADE: 0.3
+    ELEVATED: 0.8
+    TRENCHED: 0.5
+    RAMP: 0.5
+  compatibleTrackTypes:
+  - electroliner2
+  appearance:
+    color: '#0A75AD'
+  elevationTransitionCosts: true
+  gradeCrossing: none
