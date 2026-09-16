@@ -1,0 +1,30 @@
+trains.yaml
+  s_40fa243f1ec2bc::t_6a59223975eb41 336
+  s_40fa243f1ec2bc::t_c6888c34e09860 154
+  s_40fa243f1ec2bc::t_0cae890396b6ad 354
+  s_40fa243f1ec2bc::t_c0f690bc3a657c 314,316
+index.js
+  s_40fa243f1ec2bc::t_4b7c65df77f094 182,360,362,382,402,592-601,666-669,677,686-692,820-834,967-972,1069-1125
+src/ui.ts
+  s_40fa243f1ec2bc::t_d66c89f29043b5 260-263,274-277,287,296-304
+  s_40fa243f1ec2bc::t_c9c4682c2bcf2e 812-892
+  s_40fa243f1ec2bc::t_8168620b396aff 450-465
+  s_40fa243f1ec2bc::t_38ad3ddccd999f 646-652
+  s_40fa243f1ec2bc::t_379a22457a0fc7 184-194
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "6e68b96ab967e211ccb004257ca76e649f472d9e",
+  "prompts": {},
+  "sessions": {
+    "s_40fa243f1ec2bc": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "128cc4f5-bfc2-43dd-a02c-66565a0ff448",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Arnab Ghosh <arnabcare21@gmail.com>"
+    }
+  }
+}
