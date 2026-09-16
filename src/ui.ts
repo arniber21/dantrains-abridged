@@ -181,6 +181,17 @@
 		tphLimit: 30,
 	};
 
+	// Mirrors trains.yaml's `gradeCrossingPresets.lightRail` -- the editor has no
+	// access to that file at runtime, so the defaults are duplicated here.
+	const DEFAULT_GRADE_CROSSING_TPH: GradeCrossingTphLimit = {
+		highway: null,
+		major: 20,
+		medium: 20,
+		minor: 40,
+	};
+	const DEFAULT_GRADE_CROSSING_BASE_COST = 300000;
+	const DEFAULT_GRADE_CROSSING_MAINTENANCE_PER_DAY = 800;
+
 	const DEFAULT_ELEVATION: ElevationMultipliers = {
 		DEEP_BORE: 4.9,
 		STANDARD_TUNNEL: 2.09,
@@ -246,6 +257,10 @@
 		color: string;
 		trackTypes: string;
 		stats: TrainStats;
+		allowGradeCrossing: boolean;
+		gradeCrossingBaseCost: number;
+		gradeCrossingMaintenancePerDay: number;
+		gradeCrossingTphLimit: GradeCrossingTphLimit;
 	}
 
 	function newDraft(): Draft {
@@ -256,6 +271,10 @@
 			color: "#60fb87",
 			trackTypes: "",
 			stats: { ...DEFAULT_STATS },
+			allowGradeCrossing: false,
+			gradeCrossingBaseCost: DEFAULT_GRADE_CROSSING_BASE_COST,
+			gradeCrossingMaintenancePerDay: DEFAULT_GRADE_CROSSING_MAINTENANCE_PER_DAY,
+			gradeCrossingTphLimit: { ...DEFAULT_GRADE_CROSSING_TPH },
 		};
 	}
 
@@ -265,7 +284,7 @@
 			.map((t) => t.trim())
 			.filter((t) => t.length > 0);
 
-		return {
+		const definition: TrainDefinition = {
 			id: draft.id,
 			name: draft.name.trim(),
 			description: draft.description,
@@ -274,6 +293,15 @@
 			appearance: { color: draft.color },
 			elevationMultipliers: { ...DEFAULT_ELEVATION },
 		};
+
+		if (draft.allowGradeCrossing) {
+			definition.allowGradeCrossing = true;
+			definition.gradeCrossingBaseCost = draft.gradeCrossingBaseCost;
+			definition.gradeCrossingMaintenancePerDay = draft.gradeCrossingMaintenancePerDay;
+			definition.gradeCrossingTphLimit = { ...draft.gradeCrossingTphLimit };
+		}
+
+		return definition;
 	}
 
 	// ---------------------------------------------------------------------
@@ -417,6 +445,22 @@
 		}
 		if (ok("trainWidth", "parallelTrackSpacing") && s.parallelTrackSpacing < s.trainWidth) {
 			warnings.push("parallelTrackSpacing is narrower than trainWidth — check clearances.");
+		}
+
+		// --- Grade crossing, only when enabled ---
+		if (draft.allowGradeCrossing) {
+			if (!Number.isFinite(draft.gradeCrossingBaseCost) || draft.gradeCrossingBaseCost < 0) {
+				fieldErrors.gradeCrossingBaseCost = "Must be a number, 0 or more.";
+			}
+			if (!Number.isFinite(draft.gradeCrossingMaintenancePerDay) || draft.gradeCrossingMaintenancePerDay < 0) {
+				fieldErrors.gradeCrossingMaintenancePerDay = "Must be a number, 0 or more.";
+			}
+			for (const key of ["major", "medium", "minor"] as const) {
+				const value = draft.gradeCrossingTphLimit[key];
+				if (!Number.isFinite(value) || (value as number) <= 0) {
+					fieldErrors[`gradeCrossingTphLimit.${key}`] = "Must be greater than 0.";
+				}
+			}
 		}
 
 		return { fieldErrors, warnings };
@@ -599,6 +643,13 @@
 			setDraft((prev) => ({ ...prev, stats: { ...prev.stats, [key]: value } }));
 		}
 
+		function setGradeCrossingTph(key: "major" | "medium" | "minor", value: number): void {
+			setDraft((prev) => ({
+				...prev,
+				gradeCrossingTphLimit: { ...prev.gradeCrossingTphLimit, [key]: value },
+			}));
+		}
+
 		async function onSave(): Promise<void> {
 			setAttempted(true);
 			if (blocked) {
@@ -757,6 +808,87 @@
 					(val) => setDraft((p) => ({ ...p, trackTypes: val })),
 					"bart, caltrain"
 				),
+
+				h("div", { key: "gradeCrossing", className: "space-y-2" }, [
+					h("label", { key: "toggle", className: "flex items-center gap-2 text-sm" }, [
+						h("input", {
+							key: "cb",
+							type: "checkbox",
+							checked: draft.allowGradeCrossing,
+							onChange: (e: unknown) =>
+								setDraft((p) => ({
+									...p,
+									allowGradeCrossing: (e as { target: { checked: boolean } }).target.checked,
+								})),
+						}),
+						"Allow grade crossings",
+					]),
+					...(draft.allowGradeCrossing
+						? [
+								h("div", { key: "fields", className: "grid grid-cols-2 gap-2" }, [
+									field(
+										"gradeCrossingBaseCost",
+										"gradeCrossingBaseCost",
+										v.fieldErrors.gradeCrossingBaseCost,
+										h("input", {
+											key: "i",
+											type: "number",
+											step: "any",
+											className:
+												v.fieldErrors.gradeCrossingBaseCost === undefined ? INPUT_OK : INPUT_BAD,
+											value: Number.isFinite(draft.gradeCrossingBaseCost)
+												? String(draft.gradeCrossingBaseCost)
+												: "",
+											onChange: (e: unknown) =>
+												setDraft((p) => ({ ...p, gradeCrossingBaseCost: readNumber(e) })),
+										})
+									),
+									field(
+										"gradeCrossingMaintenancePerDay",
+										"gradeCrossingMaintenancePerDay",
+										v.fieldErrors.gradeCrossingMaintenancePerDay,
+										h("input", {
+											key: "i",
+											type: "number",
+											step: "any",
+											className:
+												v.fieldErrors.gradeCrossingMaintenancePerDay === undefined
+													? INPUT_OK
+													: INPUT_BAD,
+											value: Number.isFinite(draft.gradeCrossingMaintenancePerDay)
+												? String(draft.gradeCrossingMaintenancePerDay)
+												: "",
+											onChange: (e: unknown) =>
+												setDraft((p) => ({
+													...p,
+													gradeCrossingMaintenancePerDay: readNumber(e),
+												})),
+										})
+									),
+									...(["major", "medium", "minor"] as const).map((key) =>
+										field(
+											`gradeCrossingTphLimit.${key}`,
+											`gradeCrossingTphLimit.${key}`,
+											v.fieldErrors[`gradeCrossingTphLimit.${key}`],
+											h("input", {
+												key: "i",
+												type: "number",
+												step: "any",
+												className:
+													v.fieldErrors[`gradeCrossingTphLimit.${key}`] === undefined
+														? INPUT_OK
+														: INPUT_BAD,
+												value: Number.isFinite(draft.gradeCrossingTphLimit[key])
+													? String(draft.gradeCrossingTphLimit[key])
+													: "",
+												onChange: (e: unknown) => setGradeCrossingTph(key, readNumber(e)),
+											})
+										)
+									),
+								]),
+							]
+						: []),
+				]),
 
 				...statInputs,
 				...notices,

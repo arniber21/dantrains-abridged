@@ -151,7 +151,7 @@ newTrainTypes:
     trainWidth: 2.65
     carCost: 2089649
     minStationLength: 11.43
-    maxStationLength: 51
+    maxStationLength: 140
     baseTrackCost: 35000
     baseStationCost: 63750000
     trainOperationalCostPerHour: 100
@@ -311,9 +311,9 @@ newTrainTypes:
     color: '#0A75AD'
   elevationTransitionCosts: true
   gradeCrossing: none
-- id: avento
+- id: avenio
   name: Siemens Avenio
-  description: Modular, 100% low-floor tram adaptable to different networks, with configurations from 18 to 72 meters. Stats sourced from the Tram&S-Bahn mod, credit to Haeffound and Valdotorium.
+  description: Modular, 100% low-floor tram adaptable to different networks, with configurations from 18 to 80 meters. Stats sourced from the Tram&S-Bahn mod, credit to Haeffound and Valdotorium.
   stats:
     maxSpeed: 22.22
     maxAcceleration: 0.8
@@ -333,7 +333,7 @@ newTrainTypes:
     trainWidth: 2.65
     carCost: 1500000
     minStationLength: 18
-    maxStationLength: 72
+    maxStationLength: 80
     baseTrackCost: 40000
     baseStationCost: 15000000
     trainOperationalCostPerHour: 180
@@ -351,7 +351,7 @@ newTrainTypes:
     TRENCHED: 0.5
     RAMP: 0.5
   compatibleTrackTypes:
-  - avento
+  - avenio
   appearance:
     color: '#FF0010'
   elevationTransitionCosts: true

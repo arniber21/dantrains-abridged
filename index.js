@@ -179,7 +179,7 @@
 				trainWidth: 2.65,
 				carCost: 2089649,
 				minStationLength: 11.43,
-				maxStationLength: 51,
+				maxStationLength: 140,
 				baseTrackCost: 35000,
 				baseStationCost: 63750000,
 				trainOperationalCostPerHour: 100,
@@ -357,9 +357,9 @@
 			...NO_GRADE_CROSSING,
 		},
 		{
-			id: "avento",
+			id: "avenio",
 			name: "Siemens Avenio",
-			description: "Modular, 100% low-floor tram adaptable to different networks, with configurations from 18 to 72 meters. Stats sourced from the Tram&S-Bahn mod, credit to Haeffound and Valdotorium.",
+			description: "Modular, 100% low-floor tram adaptable to different networks, with configurations from 18 to 80 meters. Stats sourced from the Tram&S-Bahn mod, credit to Haeffound and Valdotorium.",
 			stats: {
 				maxSpeed: 22.22,
 				maxAcceleration: 0.8,
@@ -379,7 +379,7 @@
 				trainWidth: 2.65,
 				carCost: 1500000,
 				minStationLength: 18,
-				maxStationLength: 72,
+				maxStationLength: 80,
 				baseTrackCost: 40000,
 				baseStationCost: 15000000,
 				trainOperationalCostPerHour: 180,
@@ -399,7 +399,7 @@
 				TRENCHED: 0.5,
 				RAMP: 0.5,
 			},
-			compatibleTrackTypes: ["avento"],
+			compatibleTrackTypes: ["avenio"],
 			appearance: {
 				color: "#FF0010",
 			},
@@ -589,6 +589,16 @@ try {
 	        stationMaintenanceCostPerYear: 160000,
 	        tphLimit: 30,
 	    };
+	    // Mirrors trains.yaml's `gradeCrossingPresets.lightRail` -- the editor has no
+	    // access to that file at runtime, so the defaults are duplicated here.
+	    const DEFAULT_GRADE_CROSSING_TPH = {
+	        highway: null,
+	        major: 20,
+	        medium: 20,
+	        minor: 40,
+	    };
+	    const DEFAULT_GRADE_CROSSING_BASE_COST = 300000;
+	    const DEFAULT_GRADE_CROSSING_MAINTENANCE_PER_DAY = 800;
 	    const DEFAULT_ELEVATION = {
 	        DEEP_BORE: 4.9,
 	        STANDARD_TUNNEL: 2.09,
@@ -653,6 +663,10 @@ try {
 	            color: "#60fb87",
 	            trackTypes: "",
 	            stats: { ...DEFAULT_STATS },
+	            allowGradeCrossing: false,
+	            gradeCrossingBaseCost: DEFAULT_GRADE_CROSSING_BASE_COST,
+	            gradeCrossingMaintenancePerDay: DEFAULT_GRADE_CROSSING_MAINTENANCE_PER_DAY,
+	            gradeCrossingTphLimit: { ...DEFAULT_GRADE_CROSSING_TPH },
 	        };
 	    }
 	    function toDefinition(draft) {
@@ -660,7 +674,7 @@ try {
 	            .split(",")
 	            .map((t) => t.trim())
 	            .filter((t) => t.length > 0);
-	        return {
+	        const definition = {
 	            id: draft.id,
 	            name: draft.name.trim(),
 	            description: draft.description,
@@ -669,6 +683,13 @@ try {
 	            appearance: { color: draft.color },
 	            elevationMultipliers: { ...DEFAULT_ELEVATION },
 	        };
+	        if (draft.allowGradeCrossing) {
+	            definition.allowGradeCrossing = true;
+	            definition.gradeCrossingBaseCost = draft.gradeCrossingBaseCost;
+	            definition.gradeCrossingMaintenancePerDay = draft.gradeCrossingMaintenancePerDay;
+	            definition.gradeCrossingTphLimit = { ...draft.gradeCrossingTphLimit };
+	        }
+	        return definition;
 	    }
 	    // ---------------------------------------------------------------------
 	    // Validation
@@ -795,6 +816,21 @@ try {
 	        }
 	        if (ok("trainWidth", "parallelTrackSpacing") && s.parallelTrackSpacing < s.trainWidth) {
 	            warnings.push("parallelTrackSpacing is narrower than trainWidth — check clearances.");
+	        }
+	        // --- Grade crossing, only when enabled ---
+	        if (draft.allowGradeCrossing) {
+	            if (!Number.isFinite(draft.gradeCrossingBaseCost) || draft.gradeCrossingBaseCost < 0) {
+	                fieldErrors.gradeCrossingBaseCost = "Must be a number, 0 or more.";
+	            }
+	            if (!Number.isFinite(draft.gradeCrossingMaintenancePerDay) || draft.gradeCrossingMaintenancePerDay < 0) {
+	                fieldErrors.gradeCrossingMaintenancePerDay = "Must be a number, 0 or more.";
+	            }
+	            for (const key of ["major", "medium", "minor"]) {
+	                const value = draft.gradeCrossingTphLimit[key];
+	                if (!Number.isFinite(value) || value <= 0) {
+	                    fieldErrors[`gradeCrossingTphLimit.${key}`] = "Must be greater than 0.";
+	                }
+	            }
 	        }
 	        return { fieldErrors, warnings };
 	    }
@@ -928,6 +964,12 @@ try {
 	        function setStat(key, value) {
 	            setDraft((prev) => ({ ...prev, stats: { ...prev.stats, [key]: value } }));
 	        }
+	        function setGradeCrossingTph(key, value) {
+	            setDraft((prev) => ({
+	                ...prev,
+	                gradeCrossingTphLimit: { ...prev.gradeCrossingTphLimit, [key]: value },
+	            }));
+	        }
 	        async function onSave() {
 	            setAttempted(true);
 	            if (blocked) {
@@ -1024,6 +1066,63 @@ try {
 	                textField("desc", "Description", draft.description, undefined, (val) => setDraft((p) => ({ ...p, description: val }))),
 	                textField("color", "Colour (hex)", draft.color, identityError("color", draft.color), (val) => setDraft((p) => ({ ...p, color: val })), "#60fb87"),
 	                textField("tracks", "Compatible track types (comma separated, blank = its own)", draft.trackTypes, identityError("trackTypes", draft.trackTypes), (val) => setDraft((p) => ({ ...p, trackTypes: val })), "bart, caltrain"),
+	                h("div", { key: "gradeCrossing", className: "space-y-2" }, [
+	                    h("label", { key: "toggle", className: "flex items-center gap-2 text-sm" }, [
+	                        h("input", {
+	                            key: "cb",
+	                            type: "checkbox",
+	                            checked: draft.allowGradeCrossing,
+	                            onChange: (e) => setDraft((p) => ({
+	                                ...p,
+	                                allowGradeCrossing: e.target.checked,
+	                            })),
+	                        }),
+	                        "Allow grade crossings",
+	                    ]),
+	                    ...(draft.allowGradeCrossing
+	                        ? [
+	                            h("div", { key: "fields", className: "grid grid-cols-2 gap-2" }, [
+	                                field("gradeCrossingBaseCost", "gradeCrossingBaseCost", v.fieldErrors.gradeCrossingBaseCost, h("input", {
+	                                    key: "i",
+	                                    type: "number",
+	                                    step: "any",
+	                                    className: v.fieldErrors.gradeCrossingBaseCost === undefined ? INPUT_OK : INPUT_BAD,
+	                                    value: Number.isFinite(draft.gradeCrossingBaseCost)
+	                                        ? String(draft.gradeCrossingBaseCost)
+	                                        : "",
+	                                    onChange: (e) => setDraft((p) => ({ ...p, gradeCrossingBaseCost: readNumber(e) })),
+	                                })),
+	                                field("gradeCrossingMaintenancePerDay", "gradeCrossingMaintenancePerDay", v.fieldErrors.gradeCrossingMaintenancePerDay, h("input", {
+	                                    key: "i",
+	                                    type: "number",
+	                                    step: "any",
+	                                    className: v.fieldErrors.gradeCrossingMaintenancePerDay === undefined
+	                                        ? INPUT_OK
+	                                        : INPUT_BAD,
+	                                    value: Number.isFinite(draft.gradeCrossingMaintenancePerDay)
+	                                        ? String(draft.gradeCrossingMaintenancePerDay)
+	                                        : "",
+	                                    onChange: (e) => setDraft((p) => ({
+	                                        ...p,
+	                                        gradeCrossingMaintenancePerDay: readNumber(e),
+	                                    })),
+	                                })),
+	                                ...["major", "medium", "minor"].map((key) => field(`gradeCrossingTphLimit.${key}`, `gradeCrossingTphLimit.${key}`, v.fieldErrors[`gradeCrossingTphLimit.${key}`], h("input", {
+	                                    key: "i",
+	                                    type: "number",
+	                                    step: "any",
+	                                    className: v.fieldErrors[`gradeCrossingTphLimit.${key}`] === undefined
+	                                        ? INPUT_OK
+	                                        : INPUT_BAD,
+	                                    value: Number.isFinite(draft.gradeCrossingTphLimit[key])
+	                                        ? String(draft.gradeCrossingTphLimit[key])
+	                                        : "",
+	                                    onChange: (e) => setGradeCrossingTph(key, readNumber(e)),
+	                                }))),
+	                            ]),
+	                        ]
+	                        : []),
+	                ]),
 	                ...statInputs,
 	                ...notices,
 	                h("button", {
