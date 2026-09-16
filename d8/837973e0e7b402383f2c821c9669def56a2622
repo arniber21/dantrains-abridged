@@ -1,0 +1,23 @@
+manifest.json
+  s_40fa243f1ec2bc::t_a1249bd5a121e5 5
+package-lock.json
+  s_40fa243f1ec2bc::t_1ee43f397107e9 3,9
+package.json
+  s_40fa243f1ec2bc::t_0f694f831a9be0 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "d8837973e0e7b402383f2c821c9669def56a2622",
+  "prompts": {},
+  "sessions": {
+    "s_40fa243f1ec2bc": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "128cc4f5-bfc2-43dd-a02c-66565a0ff448",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Arnab Ghosh <arnabcare21@gmail.com>"
+    }
+  }
+}
